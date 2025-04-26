@@ -27,9 +27,9 @@ def get_random_apod_image():
         data = response.json()
         if data.get("media_type") == "image":
             print(f"Title: {data['title']}")
-            print(f"Date: {data['date']}")
+            print(f"Date Taken: {data['date']}")
             print(f"URL: {data['url']}")
-            return data['url'], data['title']
+            return data['url'], data['title'], data['date']
         else:
             print(f"The media on {random_date} is not an image. Trying again...")
             return get_random_apod_image()
@@ -37,18 +37,18 @@ def get_random_apod_image():
         print(f"Failed to fetch data: {response.status_code}")
         return None, None
 
-def download_image(image_url, title):
+def download_image(image_url, title, date_posted):
     response = requests.get(image_url)
     time_now = datetime.now()
     if response.status_code == 200:
-        file_name = f"{title.replace(' ', '_')}.jpg"
+        file_name = f"{title.replace(' ', '_')}_{date_posted}.jpg"
         file_path = DOWNLOAD_DIR / file_name
         with open(file_path, 'wb') as f:
             f.write(response.content)
         print(f"Image downloaded to {file_path}")
 
         with open("response_log.txt", "a") as log:
-            log.write(f"[{time_now.strftime('%Y-%m-%d %H:%M:%S')}] : {file_name} Successfully downloaded.\n")
+            log.write(f"[{time_now.strftime('%Y-%m-%d %H:%M:%S')}] : {file_name} Successfully downloaded. Original post date : {date_posted}\n")
 
         return file_path
     else:
@@ -69,8 +69,8 @@ def set_wallpaper(image_path):
 #--------[MAIN LOOP]------#
 
 if __name__ == "__main__":
-    image_url, title = get_random_apod_image()
+    image_url, title, date_posted = get_random_apod_image()
     if image_url:
-        image_path = download_image(image_url, title)
+        image_path = download_image(image_url, title, date_posted)
         if image_path:
             set_wallpaper(image_path)
