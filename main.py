@@ -1,4 +1,5 @@
 import requests
+import re
 import random
 import os
 import ctypes
@@ -37,18 +38,21 @@ def get_random_apod_image():
         print(f"Failed to fetch data: {response.status_code}")
         return None, None
 
+
 def download_image(image_url, title, date_posted):
     response = requests.get(image_url)
     time_now = datetime.now()
     if response.status_code == 200:
-        file_name = f"{title.replace(' ', '_')}_{date_posted}.jpg"
+        file_name = sanitize_filename(title, date_posted)
         file_path = DOWNLOAD_DIR / file_name
+
         with open(file_path, 'wb') as f:
             f.write(response.content)
         print(f"Image downloaded to {file_path}")
 
         with open("response_log.txt", "a") as log:
-            log.write(f"[{time_now.strftime('%Y-%m-%d %H:%M:%S')}] : {file_name} Successfully downloaded. Original post date : {date_posted}\n")
+            log.write(
+                f"[{time_now.strftime('%Y-%m-%d %H:%M:%S')}] : {file_name} Successfully downloaded. Original post date : {date_posted}\n")
 
         return file_path
     else:
@@ -66,6 +70,10 @@ def set_wallpaper(image_path):
     else:
         print("Failed to set wallpaper.")
 
+def sanitize_filename(title, date_posted):
+    invalid_chars = r'[<>:"/\\|?*\x00-\x1F]'
+    sanitized_title = re.sub(invalid_chars, '_', title)
+    return f"{sanitized_title}_{date_posted}.jpg"
 #--------[MAIN LOOP]------#
 
 if __name__ == "__main__":
